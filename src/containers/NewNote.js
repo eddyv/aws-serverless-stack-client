@@ -5,6 +5,8 @@ import LoaderButton from "../components/LoaderButton";
 import { onError } from "../libs/errorLib";
 import config from "../config";
 import "./NewNote.css";
+import { s3Upload } from "../libs/awsLib";
+import { API } from "aws-amplify";
 
 export default function NewNote() {
   const file = useRef(null);
@@ -29,8 +31,23 @@ export default function NewNote() {
           config.MAX_ATTACHMENT_SIZE / 1000000
         } MB.`
       );
+      return;
     }
-    return;
+    setIsLoading(true);
+    try {
+      const attachment = file.current ? await s3Upload(file.current) : null;
+      await createNote({ content, attachment });
+      history.push("/");
+    } catch (e) {
+      onError(e);
+      setIsLoading(false);
+    }
+  }
+
+  function createNote(note) {
+    return API.post("notes", "/notes", {
+      body: note,
+    });
   }
 
   return (
