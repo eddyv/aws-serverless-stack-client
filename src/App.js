@@ -6,8 +6,10 @@ import Routes from "./Routes";
 import { LinkContainer } from "react-router-bootstrap";
 import { AppContext } from "./libs/contextLib";
 import { Auth } from "aws-amplify";
+import { useHistory } from "react-router";
 
 function App() {
+  const history = useHistory();
   const [isAuthenticated, userHasAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
 
@@ -30,6 +32,7 @@ function App() {
   async function handleLogout() {
     await Auth.signOut();
     userHasAuthenticated(false);
+    history.push("/login");
   }
 
   return (
