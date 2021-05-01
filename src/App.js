@@ -4,7 +4,6 @@ import Nav from "react-bootstrap/Nav";
 import "./App.css";
 import Routes from "./Routes";
 import { LinkContainer } from "react-router-bootstrap";
-import { Link } from "react-router-dom";
 
 function App() {
   return (
