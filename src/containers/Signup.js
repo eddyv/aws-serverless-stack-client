@@ -6,6 +6,8 @@ import Form from "react-bootstrap/Form";
 
 import "./Signup.css";
 import LoaderButton from "../components/LoaderButton";
+import { onError } from "../libs/errorLib";
+import { Auth } from "aws-amplify";
 
 export default function Signup() {
   const [fields, handleFieldChange] = useFormFields({
@@ -36,13 +38,41 @@ export default function Signup() {
     event.preventDefault();
 
     setIsLoading(true);
-    setNewUser("test");
+
+    try {
+      const user = await Auth.signUp({
+        username: fields.email,
+        password: fields.password,
+      });
+      setNewUser(user);
+    } catch (e) {
+      if (e.name === "UsernameExistsException") {
+        try {
+          const unConfirmedUser = await Auth.resendSignUp(fields.email);
+          setNewUser(unConfirmedUser);
+        } catch (e) {
+          onError(e);
+        }
+      } else {
+        onError(e);
+      }
+    }
     setIsLoading(false);
   }
 
   async function handleConfirmationSubmit(event) {
     event.preventDefault();
     setIsLoading(true);
+
+    try {
+      await Auth.confirmSignUp(fields.email, fields.confirmationCode);
+      await Auth.signIn(fields.email, fields.password);
+      userHasAuthenticated(true);
+      history.push("/");
+    } catch (e) {
+      onError(e);
+      setIsLoading(false);
+    }
   }
 
   function renderConfirmationForm() {
