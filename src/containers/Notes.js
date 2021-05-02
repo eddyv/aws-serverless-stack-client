@@ -79,6 +79,7 @@ export default function Notes() {
         attachment = await s3Upload(file.current);
       }
       if (attachment) {
+        // delete the old note from the bucket.
         await s3Delete(note.attachment);
         await saveNote({
           content,
@@ -97,6 +98,10 @@ export default function Notes() {
     }
   }
 
+  function deleteNote() {
+    return API.del("notes", `/notes/${id}`);
+  }
+
   async function handleDelete(event) {
     event.preventDefault();
 
@@ -109,6 +114,16 @@ export default function Notes() {
     }
 
     setIsDeleting(true);
+
+    try {
+      //first delete the attachment form the s3 bucket
+      await s3Delete(note.attachment);
+      await deleteNote();
+      history.push("/");
+    } catch (e) {
+      onError(e);
+      setIsDeleting(false);
+    }
   }
 
   return (
