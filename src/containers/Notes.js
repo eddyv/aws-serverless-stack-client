@@ -6,6 +6,7 @@ import Form from "react-bootstrap/Form";
 import LoaderButton from "../components/LoaderButton";
 import config from "../config";
 import "./Notes.css";
+import { s3Delete, s3Upload } from "../libs/awsLib";
 
 export default function Notes() {
   const file = useRef(null);
@@ -51,6 +52,12 @@ export default function Notes() {
     file.current = event.target.files[0];
   }
 
+  function saveNote(note) {
+    return API.put("notes", `/notes/${id}`, {
+      body: note,
+    });
+  }
+
   async function handleSubmit(event) {
     let attachment;
 
@@ -66,6 +73,28 @@ export default function Notes() {
     }
 
     setIsLoading(true);
+
+    try {
+      if (file.current) {
+        attachment = await s3Upload(file.current);
+      }
+      if (attachment) {
+        await s3Delete(note.attachment);
+        await saveNote({
+          content,
+          attachment: attachment,
+        });
+      } else {
+        await saveNote({
+          content,
+          attachment: note.attachment,
+        });
+      }
+      history.push("/");
+    } catch (e) {
+      onError(e);
+      setIsLoading(false);
+    }
   }
 
   async function handleDelete(event) {
